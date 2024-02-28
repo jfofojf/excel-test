@@ -1,0 +1,51 @@
+version: '3.9'
+services:
+
+  db:
+    container_name: news-db
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: news_panel_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secretQwertyPass
+    volumes:
+      - ./docker/pgsql:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+
+  nginx:
+    container_name: news-nginx
+    build:
+      context: ./dockerfiles/nginx
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./dockerfiles/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/logs:/var/log/nginx
+      - ./www:/var/www/excel-app
+    ports:
+      - '80:80'
+    networks:
+      backend:
+    depends_on:
+      - php
+
+  php:
+    container_name: news-php
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile
+      target: php
+    volumes:
+      - ./www:/var/www/excel-app
+    depends_on:
+      - db
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
